@@ -1,8 +1,8 @@
-###################################
-# Created by: Simon Torben Larsen #
-# Company: Dansk Metal            #
-# CopyRights: Dansk Metal         #      
-###################################
+
+# Created by: Simon Torben Larsen
+ Company: Dansk Metal            
+ CopyRights: Dansk Metal              
+
 
 /* DanskMetal.Calculators.APi */
 
