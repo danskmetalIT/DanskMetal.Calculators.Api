@@ -99,6 +99,7 @@ namespace DanskMetal.Calculators.Api.Controllers
 
             return Ok(result);
         }
+        
         [HttpPost("noticePeriod")]
         public ActionResult<NoticePeriodResult> CalculateNoticePeriod(NoticePeriodInput input)
         {

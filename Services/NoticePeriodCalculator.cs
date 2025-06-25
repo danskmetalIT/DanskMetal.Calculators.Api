@@ -117,46 +117,72 @@ namespace DanskMetal.Calculators.Api.Services
 
         private static NoticePeriodResult CalculateIndustriensOverenskomst(NoticePeriodInput input)
         {
-            // Lav alle dine 500 linjers beregninger her
+            
             string returnState = "OK - Industriens Overenskomst";
-            string noticePeriodStr = "...";
-            string severencePayStr = "...";
-            string extraDisplayedInfoStr = "...";
-
-
-
-            //extraDisplayedInfoStr = cDDays + " Days " + cDMonths + " Months " + cDYears + " Years";
-            /* Text from the collective agreement */
-            // § 38 Opsigelsesregler
-            // Ophævelse fra virksomhedens side
-            // p1 < 6 måneder = Ingen varsel - tjek eventuelt om de har aftalt yderelige i kontrakten
-            // p2 >= 6 måneder og < 9 måneder = 14 dages varsel
-            // p3 >= 9 måneder og < 2 år = 21 dages varsel
-            // p4 >= 2 år og < 3 år = 28 dages varsel
-            // p5 >= 3 år og < 6 år = 56 dages varsel
-            // p6 >= 6 år = 70 dages varsel
-
-            // Medarbejdere over 50 år
-            // p7 >= 9 år < 12 år = 90 dages varsel
-            // p8 >= 12 år = 120 dages varsel
-
-            // Ophævelse fra medarbejderens side
-            // < 6 måneder = Ingen varsel - tjek eventuelt om de har aftalt yderelige i kontrakten
-            // >= 6 måneder og < 3 år = 7 dages varsel
-            // >= 3 år og < 6 år = 14 dages varsel
-            // >= 6 år og < 9 år = 21 dages varsel
-            // >= 9 år = 28 dages varsel
-
-            // Fratrædelsesgodtgørelse
-            // >= 3 år = mulighed for fratrædelsesgodtgørelse.
+            string noticePeriodStr = "";
+            string severencePayStr = "";
+            string extraDisplayedInfoStr = "";
 
             /* start calculation */
             // Vaiables
             DateOnly today = DateOnly.FromDateTime(DateTime.Now); // Set current date of the server
             int age = today.Year - input.BirthdayDate.Year;
 
+            /* Text from the collective agreement */
+            // § 38 Opsigelsesregler
+            // Ophævelse fra virksomhedens side
+            // p1 < 6 måneder = Ingen varsel - tjek eventuelt om de har aftalt yderelige i kontrakten
+            DateOnly p1Start = input.ContractStartDate;
+            DateOnly p1End = input.ContractStartDate.AddMonths(6).AddDays(-1);
+            // p2 >= 6 måneder og < 9 måneder = 14 dages varsel
+            DateOnly p2Start = p1End.AddDays(1);
+            DateOnly p2End = input.ContractStartDate.AddMonths(9).AddDays(-1);
+            // p3 >= 9 måneder og < 2 år = 21 dages varsel
+            DateOnly p3Start = p2End.AddDays(1);
+            DateOnly p3End = input.ContractStartDate.AddYears(2).AddDays(-1);
+            // p4 >= 2 år og < 3 år = 28 dages varsel
+            DateOnly p4Start = p3End.AddDays(1);
+            DateOnly p4End = input.ContractStartDate.AddYears(3).AddDays(-1);
+            // p5 >= 3 år og < 6 år = 56 dages varsel
+            DateOnly p5Start = p4End.AddDays(1);
+            DateOnly p5End = input.ContractStartDate.AddYears(6).AddDays(-1);
+            // p6 >= 6 år = 70 dages varsel
+            DateOnly p6Start = p5End.AddDays(1);
+            DateOnly p6End;
+            if (age > 49)
+            {
+                p6End = input.ContractStartDate.AddYears(9).AddDays(-1);
+            } else
+            {
+                p6End = input.ContractStartDate.AddYears(500).AddDays(-1); // Way out in the future.
+            }
+                
+            // Medarbejdere på eller over 50 år
+            // p7 >= 9 år < 12 år = 90 dages varsel
+
+            // p8 >= 12 år = 120 dages varsel
+
+
+            // Ophævelse fra medarbejderens side
+            // < 6 måneder = Ingen varsel - tjek eventuelt om de har aftalt yderelige i kontrakten
+
+            // >= 6 måneder og < 3 år = 7 dages varsel
+
+            // >= 3 år og < 6 år = 14 dages varsel
+
+            // >= 6 år og < 9 år = 21 dages varsel
+
+            // >= 9 år = 28 dages varsel
+
+
+            // Fratrædelsesgodtgørelse
+            // >= 3 år = mulighed for fratrædelsesgodtgørelse.
+
+
+            
+
             // cD = contractDuration
-            var cDYears = input.ContractTerminatedDate.Year - input.ContractStartDate.Year;
+            var cDYears = input.ContractTerminatedDate.Year - input.ContractStartDate.Year; 
             var cDMonths = input.ContractTerminatedDate.Month - input.ContractStartDate.Month;
             var cDDays = input.ContractTerminatedDate.Day - input.ContractStartDate.Day;
 
