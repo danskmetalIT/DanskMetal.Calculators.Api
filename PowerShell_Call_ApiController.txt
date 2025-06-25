@@ -1,0 +1,89 @@
+If using [ApiController] and public class DMCalculatorsController : ControllerBase in DMCalculatorsController.cs.
+Then you can use the following PowerShell calls to test the API and response.
+In Umbraco the calling path should be /umbraco/api/dmcalculatorsapi/severancepay
+
+# Call for Serverence Pay
+$body = @{
+    salaryPerHour = 210.50
+    workingHours = 37
+    fritvalgsPercent = 9.45
+    unemploymentRate = 21092
+} | ConvertTo-Json
+
+Invoke-WebRequest -Uri "https://localhost:7236/api/dmcalculators/severancepay" `
+                  -Method POST `
+                  -Body $body `
+                  -ContentType "application/json" `
+                  -UseBasicParsing
+
+# Call for Rest Period
+$body = @{
+    isEightHoursRules = 0
+    t1 = 1
+    t2 = 1
+    t3 = 1
+    t4 = 1
+    t5 = 1
+    t6 = 1
+    t7 = 0
+    t8 = 0
+    t9 = 0
+    t10 = 0
+    t11 = 0
+    t12 = 0
+    t13 = 0
+    t14 = 0
+    t15 = 0
+    t16 = 0
+    t17 = 1
+    t18 = 1
+    t19 = 1
+    t20 = 1
+    t21 = 1
+    t22 = 1 
+    t23 = 1
+    t24 = 1
+} | ConvertTo-Json
+
+Invoke-WebRequest -Uri "https://localhost:7236/api/dmcalculators/restPeriod" `
+                  -Method POST `
+                  -Body $body `
+                  -ContentType "application/json" `
+                  -UseBasicParsing
+
+
+
+$body = @{
+    SelectedCollectiveAgreement = 1
+    TerminatingParty = 0
+    SalariedEmployee = 0
+    ContractStartDate = "2020-01-01"
+    ContractTerminatedDate = "2024-06-01"
+    BirthdayDate = "1990-05-10"
+} | ConvertTo-Json -Depth 3
+
+try {
+    $response = Invoke-WebRequest -Uri "https://localhost:7236/api/dmcalculators/noticePeriod" `
+                                  -Method POST `
+                                  -Body $body `
+                                  -ContentType "application/json" `
+                                  -UseBasicParsing
+
+    $responseObj = $response.Content | ConvertFrom-Json
+    $responseObj
+}
+catch {
+    Write-Host "`n--- ERROR ON CALL TO API ---`n" -ForegroundColor Red
+
+    if ($_.Exception.Response) {
+        $stream = $_.Exception.Response.GetResponseStream()
+        $reader = New-Object System.IO.StreamReader($stream)
+        $errorResponse = $reader.ReadToEnd()
+        Write-Host $errorResponse -ForegroundColor Yellow
+    }
+    else {
+        Write-Host $_.Exception.Message -ForegroundColor Red
+    }
+}
+
+
