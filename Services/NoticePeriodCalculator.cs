@@ -128,10 +128,16 @@ namespace DanskMetal.Calculators.Api.Services
             DateOnly today = DateOnly.FromDateTime(DateTime.Now); // Set current date of the server
             int age = today.Year - input.BirthdayDate.Year;
 
-            // Fratrædelsesgodtgørelse
+            // Severance pay dates
+            // not on danish salaried employees act
             // >= 3 år = mulighed for fratrædelsesgodtgørelse.
             DateOnly severancePay = input.ContractStartDate.AddYears(3);
             string severanceText = "Der kan være krav på en fratrædelsesgodtgørelse. i henhold til § 38.Stk. 11. kontakt din lokale dansk metal afdeling";
+            // on danish salaried employees act
+            DateOnly severancePayS1 = input.ContractStartDate.AddYears(3);
+            string severanceTextS1 = "Der kan være krav på en fratrædelsesgodtgørelse. i henhold til § 38.Stk. 11. kontakt din lokale dansk metal afdeling";
+            DateOnly severancePayS2 = input.ContractStartDate.AddYears(12);
+            string severanceTextS2 = "Der kan være krav på en fratrædelsesgodtgørelse. Enten FUL §2a godtgørelse eller § 38. Stk. 11 i henhold til billag 5. kontakt din lokale dansk metal afdeling";
 
             /* Text from the collective agreement */
             // § 38 Opsigelsesregler
@@ -291,16 +297,186 @@ namespace DanskMetal.Calculators.Api.Services
             DateOnly p6mStart = input.ContractStartDate.AddYears(9);
             DateOnly p6mEnd = input.ContractStartDate.AddYears(4000).AddDays(-1); // Way out in the future.;
 
+            //// If the employee is terminated by the employee, and is NOT on the Danish Salaried Employees Act
+            if (input.TerminatingParty == 1 /* Terminated by employee */ && input.SalariedEmployee == 0 /* NOT on Danish Salaried Employees Act */)
+            {
+                if (input.ContractTerminatedDate <= p1mEnd && input.ContractTerminatedDate >= p1mStart)
+                {
+                    returnState = "OK P1M";
+                    noticePeriodStr = "0 dages varsel";
+                    severancePayStr = "N/A";
+                    extraDisplayedInfoStr = "N/A";
+                    return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+                }
+                else if (input.ContractTerminatedDate <= p2mEnd && input.ContractTerminatedDate >= p2mStart)
+                {
+                    returnState = "OK P2M";
+                    noticePeriodStr = "7 dages varsel";
+                    severancePayStr = "N/A";
+                    extraDisplayedInfoStr = "N/A";
+                    return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+                }
+                else if (input.ContractTerminatedDate <= p3mEnd && input.ContractTerminatedDate >= p3mStart)
+                {
+                    returnState = "OK P3M";
+                    noticePeriodStr = "14 dages varsel";
+                    severancePayStr = "N/A";
+                    extraDisplayedInfoStr = "N/A";
+                    return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+                }
+                else if (input.ContractTerminatedDate <= p4mEnd && input.ContractTerminatedDate >= p4mStart)
+                {
+                    returnState = "OK P4M";
+                    noticePeriodStr = "21 dages varsel";
+                    severancePayStr = "N/A";
+                    extraDisplayedInfoStr = "N/A";
+                    return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+                }
+                else if (input.ContractTerminatedDate <= p6mEnd && input.ContractTerminatedDate >= p6mStart)
+                {
+                    returnState = "OK P6M";
+                    noticePeriodStr = "28 dages varsel";
+                    severancePayStr = "N/A";
+                    extraDisplayedInfoStr = "N/A";
+                    return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+                }
+            }
+
+            if (input.SalariedEmployee == 1 || input.SalariedEmployee == 2 /* On Danish Salaried Employees Act */
+                && input.TerminatingParty == 0)
+            {
+                // If the employee is terminated by the company, and is on the Danish Salaried Employees Act
+                // Opsigelsesvarsel:
+                // startdato til 3 måneder - 14 dage - 14 dages opsigelse eller samme som nedenstående hvis ingen prøveperiode.
+                DateOnly p1fStart = input.ContractStartDate;
+                DateOnly p1fEnd = input.ContractStartDate.AddMonths(3).AddDays(-15);
+
+                if (input.ContractTerminatedDate <= p1fEnd)
+                {
+                    returnState = "OK P1f";
+                    noticePeriodStr = "14 dages varsel hvis aftalt prøvetid, ellers løbende måned plus 1 måned";
+                    severancePayStr = "N/A";
+                    if (input.ContractTerminatedDate >= severancePayS1 && input.ContractTerminatedDate < severancePayS2) { severancePayStr = severanceTextS1; } else if (input.ContractTerminatedDate >= severancePayS2) { severancePayStr = severanceTextS2; }
+                    extraDisplayedInfoStr = "Bilag 5 Opsigelsesvarslernes længde kan ikke blive kortere end de i henhold til Industriens Overenskomst opnåede ved overgang til funktionærlignende ansættelse.";
+                    return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+                }
+
+                // 3 måneder - 14 dage til 5 måneder Løbende - måned + 1 måned.
+                DateOnly p2fStart = input.ContractStartDate.AddMonths(3).AddDays(-14);
+                DateOnly p2fEnd = input.ContractStartDate.AddMonths(5).AddDays(-1);
+
+                if (input.ContractTerminatedDate <= p2fEnd && input.ContractTerminatedDate >= p2fStart)
+                {
+                    returnState = "OK P2f";
+                    noticePeriodStr = "Løbende måned plus 1 måneds varsel";
+                    severancePayStr = "N/A";
+                    if (input.ContractTerminatedDate >= severancePayS1 && input.ContractTerminatedDate < severancePayS2) { severancePayStr = severanceTextS1; } else if (input.ContractTerminatedDate >= severancePayS2) { severancePayStr = severanceTextS2; }
+                    extraDisplayedInfoStr = "Bilag 5 Opsigelsesvarslernes længde kan ikke blive kortere end de i henhold til Industriens Overenskomst opnåede ved overgang til funktionærlignende ansættelse.";
+                    return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+                }
+
+                // 5 måneder til 2 år og 9 måneder - Løbende måned + 3 måneder.
+                DateOnly p3fStart = input.ContractStartDate.AddMonths(5);
+                DateOnly p3fEnd = input.ContractStartDate.AddYears(2).AddMonths(9).AddDays(-1);
+
+                if (input.ContractTerminatedDate <= p3fEnd && input.ContractTerminatedDate >= p3fStart)
+                {
+                    returnState = "OK P3f";
+                    noticePeriodStr = "Løbende måned plus 3 måneds varsel";
+                    severancePayStr = "N/A";
+                    if (input.ContractTerminatedDate >= severancePayS1 && input.ContractTerminatedDate < severancePayS2) { severancePayStr = severanceTextS1; } else if (input.ContractTerminatedDate >= severancePayS2) { severancePayStr = severanceTextS2; }
+                    extraDisplayedInfoStr = "Bilag 5 Opsigelsesvarslernes længde kan ikke blive kortere end de i henhold til Industriens Overenskomst opnåede ved overgang til funktionærlignende ansættelse.";
+                    return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+                }
+
+                // 2 år og 9 måneder til 5 år og 8 måneder - Løbende måned + 4 måneder.
+                DateOnly p4fStart = input.ContractStartDate.AddYears(2).AddMonths(9);
+                DateOnly p4fEnd = input.ContractStartDate.AddYears(5).AddMonths(8).AddDays(-1);
+
+                if (input.ContractTerminatedDate <= p4fEnd && input.ContractTerminatedDate >= p4fStart)
+                {
+                    returnState = "OK P4f";
+                    noticePeriodStr = "Løbende måned plus 4 måneds varsel";
+                    severancePayStr = "N/A";
+                    if (input.ContractTerminatedDate >= severancePayS1 && input.ContractTerminatedDate < severancePayS2) { severancePayStr = severanceTextS1; } else if (input.ContractTerminatedDate >= severancePayS2) { severancePayStr = severanceTextS2; }
+                    extraDisplayedInfoStr = "Bilag 5 Opsigelsesvarslernes længde kan ikke blive kortere end de i henhold til Industriens Overenskomst opnåede ved overgang til funktionærlignende ansættelse.";
+                    return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+                }
+
+                // 5 år og 8 måneder til 8 år og 7 måneder - Løbende måned + 5 måneder. 
+                DateOnly p5fStart = input.ContractStartDate.AddYears(5).AddMonths(8);
+                DateOnly p5fEnd = input.ContractStartDate.AddYears(8).AddMonths(7).AddDays(-1);
+
+                if (input.ContractTerminatedDate <= p5fEnd && input.ContractTerminatedDate >= p5fStart)
+                {
+                    returnState = "OK P5f";
+                    noticePeriodStr = "Løbende måned plus 5 måneds varsel";
+                    severancePayStr = "N/A";
+                    if (input.ContractTerminatedDate >= severancePayS1 && input.ContractTerminatedDate < severancePayS2) { severancePayStr = severanceTextS1; } else if (input.ContractTerminatedDate >= severancePayS2) { severancePayStr = severanceTextS2; }
+                    extraDisplayedInfoStr = "Bilag 5 Opsigelsesvarslernes længde kan ikke blive kortere end de i henhold til Industriens Overenskomst opnåede ved overgang til funktionærlignende ansættelse.";
+                    return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+                }
+
+                // Ansat i mere end 8 år og 7 måneder - Løbende måned + 6 måneder. (103+=m)
+                DateOnly p6fStart = input.ContractStartDate.AddYears(8).AddMonths(7);
+                DateOnly p6fEnd = input.ContractStartDate.AddYears(5000).AddDays(-1); // Way out in the future.
+
+                if (input.ContractTerminatedDate <= p6fEnd && input.ContractTerminatedDate >= p6fStart)
+                {
+                    returnState = "OK P6f";
+                    noticePeriodStr = "Løbende måned plus 6 måneds varsel";
+                    severancePayStr = "N/A";
+                    if (input.ContractTerminatedDate >= severancePayS1 && input.ContractTerminatedDate < severancePayS2) { severancePayStr = severanceTextS1; } else if (input.ContractTerminatedDate >= severancePayS2) { severancePayStr = severanceTextS2; }
+                    extraDisplayedInfoStr = "Bilag 5 Opsigelsesvarslernes længde kan ikke blive kortere end de i henhold til Industriens Overenskomst opnåede ved overgang til funktionærlignende ansættelse.";
+                    return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+                }
+            }
+
+            if (input.SalariedEmployee == 1 || input.SalariedEmployee == 2 /* On Danish Salaried Employees Act */
+                && input.TerminatingParty == 1)
+            {
+                // If the employee is terminated by the employee, and is on the Danish Salaried Employees Act
+                // 14 dages varsel som skal ligge indenfor den periode. (3m - 14 dage)
+                DateOnly p1fmStart = input.ContractStartDate;
+                DateOnly p1fmEnd = input.ContractStartDate.AddMonths(3).AddDays(-15);
+
+                if (input.ContractTerminatedDate <= p1fmEnd)
+                {
+                    returnState = "OK P1f";
+                    noticePeriodStr = "14 dages varsel hvis aftalt prøvetid, ellers løbende måned plus 1 måned";
+                    severancePayStr = "N/A";
+                    extraDisplayedInfoStr = "Bilag 5 Opsigelsesvarslernes længde kan ikke blive kortere end de i henhold til Industriens Overenskomst opnåede ved overgang til funktionærlignende ansættelse.";
+                    return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+                }
+
+
+                // Opsigelsesvarsel:
+                // 3 måneder+ - Løbende måned + 1 måned. 
+                DateOnly p2fmStart = input.ContractStartDate.AddMonths(3).AddDays(-14);
+                DateOnly p2fmEnd = input.ContractStartDate.AddYears(5000).AddDays(-1); // Way out in the future
+
+                if (input.ContractTerminatedDate <= p2fmEnd && input.ContractTerminatedDate >= p2fmStart)
+                {
+                    returnState = "OK P2f";
+                    noticePeriodStr = "Løbende måned plus 1 måneds varsel";
+                    severancePayStr = "N/A";
+                    extraDisplayedInfoStr = "Bilag 5 Opsigelsesvarslernes længde kan ikke blive kortere end de i henhold til Industriens Overenskomst opnåede ved overgang til funktionærlignende ansættelse.";
+                    return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+                }
+            }
+
             // cD = contractDuration
-            var cDYears = input.ContractTerminatedDate.Year - input.ContractStartDate.Year; 
+            var cDYears = input.ContractTerminatedDate.Year - input.ContractStartDate.Year;
             var cDMonths = input.ContractTerminatedDate.Month - input.ContractStartDate.Month;
             var cDDays = input.ContractTerminatedDate.Day - input.ContractStartDate.Day;
 
-                // Test output
-                returnState = age + " years old";
+            // Test output
+            returnState = age + " years old";
 
             // Return answer to API stack
             return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+            
+
         }
     }
 }
