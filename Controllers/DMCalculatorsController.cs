@@ -104,7 +104,7 @@ namespace DanskMetal.Calculators.Api.Controllers
         [HttpPost("noticePeriod")]
         public ActionResult<NoticePeriodResult> CalculateNoticePeriod(NoticePeriodInput input)
         {
-            // Checks if input values are valid
+            // Checks if input values are valid.
             if (input is null ||
                 input.SelectedCollectiveAgreement < 0 || input.SelectedCollectiveAgreement > 9 ||
                 input.TerminatingParty < 0 || input.TerminatingParty > 1 ||
