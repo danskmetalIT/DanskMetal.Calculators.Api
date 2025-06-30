@@ -45,35 +45,21 @@ namespace DanskMetal.Calculators.Api.Services
                     case 1: // Industriens Overenskomst
                         // Calling calculator
                         return CalculateIndustriensOverenskomst(input);
-
                     case 2: // Industriens FunktionærOverenskomst
-
-                        returnState = "OK - Industriens FunktionærOverenskomst";
-                        noticePeriodStr = "";
-                        severencePayStr = "";
-                        extraDisplayedInfoStr = "";
-                        break;
+                        // Calling calculator
+                        return CalculateIndustriensFunktionaerOvenskomst(input);
                     case 3: // Metal-Transportoverenskomsten
-
-                        returnState = "OK - Metal-Transportoverenskomsten";
-                        noticePeriodStr = "";
-                        severencePayStr = "";
-                        extraDisplayedInfoStr = "";
-                        break;
+                        // Calling calculator
+                        return CalculateMetalTransportoverenskomsten(input);
                     case 4: // Overenskomsten for faglærte
-
                         returnState = "OK - Overenskomsten for faglærte";
                         noticePeriodStr = "";
                         severencePayStr = "";
                         extraDisplayedInfoStr = "";
                         break;
                     case 5: // Industri- og VVS-Overenskomsten
-
-                        returnState = "OK - Industri- og VVS-Overenskomsten";
-                        noticePeriodStr = "";
-                        severencePayStr = "";
-                        extraDisplayedInfoStr = "";
-                        break;
+                        // Calling calculator
+                        return CalculateIndustriOgVVSOverenskomsten(input);
                     case 6: // DI Byggeri
 
                         returnState = "OK - DI Byggeri";
@@ -118,7 +104,7 @@ namespace DanskMetal.Calculators.Api.Services
         private static NoticePeriodResult CalculateIndustriensOverenskomst(NoticePeriodInput input)
         {
             
-            string returnState = "OK - Industriens Overenskomst";
+            string returnState = "Error CalculateIndustriensOverenskomst";
             string noticePeriodStr = "";
             string severancePayStr = "";
             string extraDisplayedInfoStr = "";
@@ -465,18 +451,302 @@ namespace DanskMetal.Calculators.Api.Services
                 }
             }
 
-            // cD = contractDuration
-            var cDYears = input.ContractTerminatedDate.Year - input.ContractStartDate.Year;
-            var cDMonths = input.ContractTerminatedDate.Month - input.ContractStartDate.Month;
-            var cDDays = input.ContractTerminatedDate.Day - input.ContractStartDate.Day;
-
-            // Test output
-            returnState = age + " years old";
-
             // Return answer to API stack
             return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
-            
+        }
+    
+        private static NoticePeriodResult CalculateIndustriensFunktionaerOvenskomst(NoticePeriodInput input)
+        {
+            string returnState = "Error CalculateIndustriensFunktionaerOvenskomst";
+            string noticePeriodStr = "";
+            string severancePayStr = "";
+            string extraDisplayedInfoStr = "";
 
+            /* start calculation */
+            // Vaiables
+            DateOnly today = DateOnly.FromDateTime(DateTime.Now); // Set current date of the server
+            int age = today.Year - input.BirthdayDate.Year;
+
+            // Severance pay dates
+            DateOnly severancePayS2 = input.ContractStartDate.AddYears(12);
+            string severanceTextS2 = "Der kan være krav på en fratrædelsesgodtgørelse. Enten FUL §2a godtgørelse eller § 38. Stk. 11 i henhold til billag 5. kontakt din lokale dansk metal afdeling";
+
+            // § 15 Opsigelsesvarsler
+            // Stk. 1
+            // For medarbejdere, der er funktionærer, henvises til Funktionærloven.
+
+            // Opsigelse fra virksomhedens side funktionær og funktionær lign.
+            // startdato til 3 måneder - 14 dage - 14 dages opsigelse eller samme som nedenstående hvis ingen prøveperiode.
+            DateOnly p1Start = input.ContractStartDate;
+            DateOnly p1End = input.ContractStartDate.AddMonths(3).AddDays(-15);
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee != 0 /* On Danish Salaried Employees Act */
+                && input.ContractTerminatedDate <= p1End)
+            {
+                returnState = "OK Funk P1";
+                noticePeriodStr = "14 dages varsel hvis aftalt prøvetid, ellers løbende måned plus 1 måned";
+                severancePayStr = "N/A";
+                if (input.ContractTerminatedDate >= severancePayS2) { severancePayStr = severanceTextS2; }
+                extraDisplayedInfoStr = "N/A";
+                return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+            }
+            // 3 måneder - 14 dage til 5 måneder Løbende - måned + 1 måned. (5m - 1 dag)
+            DateOnly p2Start = input.ContractStartDate.AddMonths(3).AddDays(-14);
+            DateOnly p2End = input.ContractStartDate.AddMonths(5).AddDays(-1);
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee != 0 /* On on Danish Salaried Employees Act */
+                && input.ContractTerminatedDate <= p2End && input.ContractTerminatedDate >= p2Start)
+            {
+                returnState = "OK Funk P2";
+                noticePeriodStr = "Løbende måned plus 1 måneds varsel";
+                severancePayStr = "N/A";
+                if (input.ContractTerminatedDate >= severancePayS2) { severancePayStr = severanceTextS2; }
+                extraDisplayedInfoStr = "N/A";
+                return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+            }
+            // 5 måneder til 2 år og 9 måneder - Løbende måned + 3 måneder. (33m - 1 dag)
+            DateOnly p3Start = input.ContractStartDate.AddMonths(5);
+            DateOnly p3End = input.ContractStartDate.AddYears(2).AddMonths(9).AddDays(-1);
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee != 0 /* On on Danish Salaried Employees Act */
+                && input.ContractTerminatedDate <= p3End && input.ContractTerminatedDate >= p3Start)
+            {
+                returnState = "OK Funk P3";
+                noticePeriodStr = "Løbende måned plus 3 måneders varsel";
+                severancePayStr = "N/A";
+                if (input.ContractTerminatedDate >= severancePayS2) { severancePayStr = severanceTextS2; }
+                extraDisplayedInfoStr = "N/A";
+                return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+            }
+            // 2 år og 9 måneder til 5 år og 8 måneder - Løbende måned + 4 måneder. (68m - 1 dag)
+            DateOnly p4Start = input.ContractStartDate.AddYears(2).AddMonths(9);
+            DateOnly p4End = input.ContractStartDate.AddYears(5).AddMonths(8).AddDays(-1);
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee != 0 /* On on Danish Salaried Employees Act */
+                && input.ContractTerminatedDate <= p4End && input.ContractTerminatedDate >= p4Start)
+            {
+                returnState = "OK Funk P4";
+                noticePeriodStr = "Løbende måned plus 4 måneders varsel";
+                severancePayStr = "N/A";
+                if (input.ContractTerminatedDate >= severancePayS2) { severancePayStr = severanceTextS2; }
+                extraDisplayedInfoStr = "N/A";
+                return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+            }
+            // 5 år og 8 måneder til 8 år og 7 måneder - Løbende måned + 5 måneder. (103m - 1 dag)
+            DateOnly p5Start = input.ContractStartDate.AddYears(5).AddMonths(8);
+            DateOnly p5End = input.ContractStartDate.AddYears(8).AddMonths(7).AddDays(-1);
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee != 0 /* On on Danish Salaried Employees Act */
+                && input.ContractTerminatedDate <= p5End && input.ContractTerminatedDate >= p5Start)
+            {
+                returnState = "OK Funk P5";
+                noticePeriodStr = "Løbende måned plus 5 måneders varsel";
+                severancePayStr = "N/A";
+                if (input.ContractTerminatedDate >= severancePayS2) { severancePayStr = severanceTextS2; }
+                extraDisplayedInfoStr = "N/A";
+                return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+            }
+            // Ansat i mere end 8 år og 7 måneder - Løbende måned + 6 måneder. (103+=m)
+            DateOnly p6Start = input.ContractStartDate.AddYears(8).AddMonths(7);
+            DateOnly p6End = input.ContractStartDate.AddYears(5000); // Way out in the future.
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee != 0 /* On on Danish Salaried Employees Act */
+                && input.ContractTerminatedDate <= p6End && input.ContractTerminatedDate >= p6Start)
+            {
+                returnState = "OK Funk P6";
+                noticePeriodStr = "Løbende måned plus 6 måneders varsel";
+                severancePayStr = "N/A";
+                if (input.ContractTerminatedDate >= severancePayS2) { severancePayStr = severanceTextS2; }
+                extraDisplayedInfoStr = "N/A";
+                return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+            }
+
+            // Opsigelse fra medarbejderens side funktionær og funktionær lign.
+            // startdato til 3 måneder - 14 dage - 14 dages opsigelse eller samme som nedenstående hvis ingen prøveperiode.
+            DateOnly p1mStart = input.ContractStartDate;
+            DateOnly p1mEnd = input.ContractStartDate.AddMonths(3).AddDays(-15);
+            if (input.TerminatingParty == 1 /* Terminated by employee */ && input.SalariedEmployee != 0 /* On Danish Salaried Employees Act */
+                && input.ContractTerminatedDate <= p1mEnd)
+            {
+                returnState = "OK Funk M P1";
+                noticePeriodStr = "14 dages varsel hvis aftalt prøvetid, ellers løbende måned plus 1 måned";
+                severancePayStr = "N/A";
+                extraDisplayedInfoStr = "N/A";
+                return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+            }
+            // 3 måneder+ - Løbende måned + 1 måned.
+            DateOnly p2mStart = input.ContractStartDate;
+            DateOnly p2mEnd = input.ContractStartDate.AddMonths(3).AddDays(-15);
+            if (input.TerminatingParty == 1 /* Terminated by employee */ && input.SalariedEmployee != 0 /* On Danish Salaried Employees Act */
+                && input.ContractTerminatedDate <= p2mEnd && input.ContractTerminatedDate >= p2mStart)
+            {
+                returnState = "OK Funk M P2";
+                noticePeriodStr = "Løbende måned plus 1 måneds varsel";
+                severancePayStr = "N/A";
+                extraDisplayedInfoStr = "N/A";
+                return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+            }
+
+            // Set Special note for persons "Not on Danish Salaried Employees Act"
+            extraDisplayedInfoStr = "§ 15 Opsigelsesvarsler\r\nStk. 3\r\nI tilfælde, hvor en timelønnet medarbejder bliver funktionær på samme virksomhed, bevarer medarbejderen det opsigelsesvarsel, der var gældende på overflytningstidspunktet, indtil den pågældende i henhold til Funktionærloven opnår mindst samme opsigelsesvarsel.";
+
+            // § 15 Opsigelsesvarsler
+            // Stk. 2
+            // For medarbejdere, der ikke er omfattet af Funktionærloven, gælder
+            // følgende opsigelsesvarsler, jf. § 1, stk. 3:
+            // I de første 3 måneder efter ansættelsen kan opsigelse fra begge sider
+            // ske uden varsel, således at fratræden sker ved normal arbejdstids ophør den pågældende dag.
+            // Fra medarbejderside:
+            DateOnly p1nfStart = input.ContractStartDate;
+            DateOnly p1nfEnd = input.ContractStartDate.AddMonths(3).AddDays(-1);
+            if (input.TerminatingParty == 1 /* Terminated by employee */ && input.SalariedEmployee == 0 /* NOT on Danish Salaried Employees Act */
+                && input.ContractTerminatedDate <= p1nfEnd)
+            {
+                returnState = "OK NOT Funk P1";
+                noticePeriodStr = "0 dages varsel, med mindre andet er aftalt lokalt";
+                severancePayStr = "N/A";
+                extraDisplayedInfoStr = "N/A";
+                return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+            }
+            // Efter 3 måneders uafbrudt beskæftigelse:
+            DateOnly p2nfmStart = input.ContractStartDate;
+            DateOnly p2nfmEnd = input.ContractStartDate.AddMonths(3).AddDays(-15);
+            if (input.TerminatingParty == 1 /* Terminated by employee */ && input.SalariedEmployee == 0 /* NOT on Danish Salaried Employees Act */
+                && input.ContractTerminatedDate <= p2nfmEnd && input.ContractTerminatedDate >= p2nfmStart)
+            {
+                returnState = "OK NOT Funk M P2";
+                noticePeriodStr = "Løbende måned plus 1 måneds varsel";
+                severancePayStr = "N/A";
+                extraDisplayedInfoStr = "N/A";
+                return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+            }
+
+            // Fra arbejdsgiverside:
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee == 0 /* NOT on Danish Salaried Employees Act */
+                && input.ContractTerminatedDate <= p1nfEnd)
+            {
+                returnState = "OK NOT Funk P1";
+                noticePeriodStr = "0 dages varsel, med mindre andet er aftalt lokalt";
+                severancePayStr = "N/A";
+                extraDisplayedInfoStr = "N/A";
+                return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+            }
+            // Efter 3 måneders uafbrudt beskæftigelse:
+            DateOnly p2nfStart = input.ContractStartDate.AddMonths(3);
+            DateOnly p2nfEnd = input.ContractStartDate.AddYears(2).AddDays(-1);
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee == 0 /* NOT on Danish Salaried Employees Act */
+                && input.ContractTerminatedDate <= p2nfEnd && input.ContractTerminatedDate >= p2nfStart)
+            {
+                returnState = "OK NOT Funk P2";
+                noticePeriodStr = "Løbende måned plus 1 måneds varsel";
+                severancePayStr = "N/A";
+                extraDisplayedInfoStr = "N/A";
+                return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+            }
+            // Efter 2 års uafbrudt beskæftigelse:
+            DateOnly p3nfStart = input.ContractStartDate.AddYears(2);
+            DateOnly p3nfEnd = input.ContractStartDate.AddYears(3).AddDays(-1);
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee == 0 /* NOT on Danish Salaried Employees Act */
+                && input.ContractTerminatedDate <= p3nfEnd && input.ContractTerminatedDate >= p3nfStart)
+            {
+                returnState = "OK NOT Funk P3";
+                noticePeriodStr = "Løbende måned plus 2 måneders varsel";
+                severancePayStr = "N/A";
+                extraDisplayedInfoStr = "N/A";
+                return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+            }
+            // Efter 3 års uafbrudt beskæftigelse:
+            DateOnly p4nfStart = input.ContractStartDate.AddYears(3);
+            DateOnly p4nfEnd = input.ContractStartDate.AddYears(5000); // Way out in the future.
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee == 0 /* NOT on Danish Salaried Employees Act */
+                && input.ContractTerminatedDate <= p4nfEnd && input.ContractTerminatedDate >= p4nfStart)
+            {
+                returnState = "OK NOT Funk P4";
+                noticePeriodStr = "Løbende måned plus 3 måneders varsel";
+                severancePayStr = "N/A";
+                extraDisplayedInfoStr = "N/A";
+                return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+            }
+            // Return answer to API stack
+            return new NoticePeriodResult(returnState, noticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+        }
+    
+        private static NoticePeriodResult CalculateMetalTransportoverenskomsten(NoticePeriodInput input)
+        {
+
+            // Same as Industriens overenskomst
+            // I Herefor call Industriens overenskomst instead of recreating it again
+            var result = CalculateIndustriensOverenskomst(input);
+            string returnState = "Error CalculateMetalTransportoverenskomsten";
+            //string noticePeriodStr = "N/A";
+            string severancePayStr = "N/A";
+            string extraDisplayedInfoStr = "N/A";
+
+            if (input.SalariedEmployee != 0 /* On Danish Salaried Employees Act */)
+            {
+                extraDisplayedInfoStr = "Bilag 8\r\nParterne er enige om, at opsigelsesvarslernes længde ikke kan være kortere end de i henhold til overenskomsten opnåede ved overgang til funktionærlignende ansættelse.";
+            }
+
+            // SeverancePay
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee == 0 /* NOT on Danish Salaried Employees Act */)
+            {
+                DateOnly p1Start = input.ContractStartDate.AddYears(3);
+                if (input.ContractTerminatedDate >= p1Start)
+                {
+                    severancePayStr = "Der kan være krav på en fratrædelsesgodtgørelse. § 10. Stk. 7. Kontakt din afdeling";
+                }
+            }
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee == 1 /* On Danish Salaried Employees Act */)
+            {
+                DateOnly p1Start = input.ContractStartDate.AddYears(12);
+                if (input.ContractTerminatedDate >= p1Start)
+                {
+                    severancePayStr = "Der kan være krav på en 2a godtgørelse i henhold til bilag 8 Opsigelse. Kontakt din afdeling";
+                }
+            }
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee == 1 /* On Danish Salaried Employees Act */)
+            {
+                DateOnly p1Start = input.ContractStartDate.AddYears(12);
+                if (input.ContractTerminatedDate >= p1Start)
+                {
+                    severancePayStr = "Der kan være krav på en 2a godtgørelse. Kontakt din afdeling";
+                }
+            }
+
+            return new NoticePeriodResult(returnState, result.NoticePeriodStr, severancePayStr, extraDisplayedInfoStr);
+        }
+    
+        private static NoticePeriodResult CalculateIndustriOgVVSOverenskomsten(NoticePeriodInput input)
+        {
+            // Same as Industriens overenskomst
+            // I Herefor call Industriens overenskomst instead of recreating it again
+            var result = CalculateIndustriensOverenskomst(input);
+            string returnState = "Error CalculateIndustriOgVVSOverenskomsten";
+            //string noticePeriodStr = "N/A";
+            string severancePayStr = "N/A";
+            string extraDisplayedInfoStr = "N/A";
+
+            // SeverancePay
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee == 0 /* NOT on Danish Salaried Employees Act */)
+            {
+                DateOnly p1Start = input.ContractStartDate.AddYears(3);
+                if (input.ContractTerminatedDate >= p1Start)
+                {
+                    severancePayStr = "Der kan være krav på en fratrædelsesgodtgørelse. § 37. Stk. 8. Kontakt din afdeling";
+                }
+            }
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee == 1 /* On Danish Salaried Employees Act */)
+            {
+                DateOnly p1Start = input.ContractStartDate.AddYears(12);
+                if (input.ContractTerminatedDate >= p1Start)
+                {
+                    severancePayStr = "Der kan være krav på en fratrædelsesgodtgørelse en 2a godtgørelse. OK Bilag 13 Stk. 3: Opsigelse. Kontakt din afdeling";
+                }
+            }
+            if (input.TerminatingParty == 0 /* Terminated by Employer */ && input.SalariedEmployee == 1 /* On Danish Salaried Employees Act */)
+            {
+                DateOnly p1Start = input.ContractStartDate.AddYears(12);
+                if (input.ContractTerminatedDate >= p1Start)
+                {
+                    severancePayStr = "Der kan være krav på en fratrædelsesgodtgørelse en 2a godtgørelse. OK Bilag 13 Stk. 3: Opsigelse. Kontakt din afdeling";
+                }
+            }
+
+            return new NoticePeriodResult(returnState, result.NoticePeriodStr, severancePayStr, extraDisplayedInfoStr);
         }
     }
 }

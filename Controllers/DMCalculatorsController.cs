@@ -118,7 +118,17 @@ namespace DanskMetal.Calculators.Api.Controllers
 
             var result = NoticePeriodCalculator.Calculate(input);
 
-            return Ok(result);
+            // Replace C# newlines and likes to html version.
+            // To display raw in Umbraco you can use
+            // @html.Raw(Model.ExtraDisplayedInfoStr) or what else you have called it.
+            var updatedResult = result with
+            {
+                ExtraDisplayedInfoStr = result.ExtraDisplayedInfoStr
+                    .Replace("\r\n", "<br />")
+                    .Replace("\n", "<br />")
+                        };
+
+            return Ok(updatedResult);
         }
         
         // Placeholder for the other Services coming from Simon Larsen Dansk Metal
