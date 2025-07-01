@@ -2,75 +2,152 @@ If using [ApiController] and public class DMCalculatorsController : ControllerBa
 Then you can use the following PowerShell calls to test the API and response.
 In Umbraco the calling path should be /umbraco/api/dmcalculatorsapi/severancepay
 
-# Call for Serverence Pay
-$body = @{
-    salaryPerHour = 210.50
-    workingHours = 37
-    fritvalgsPercent = 9.45
-    unemploymentRate = 21092
-} | ConvertTo-Json
+# 1: Launch this project without debugging "Ctrl+F5"
+# 2: Open PowerShell terminal or windows terminal. "Or any other valid terminal that can run PowerShell scripts". 
+#    The shortcut for windows terminal is the following: "Windowskey" + "X" then press "A".
+# 3: Login with the user that can run scripts. in my case it's my admin account and not my normal account.
+# 4: Run these three commands
+#    cd "C:\PSScripts" # Navigate to the folder where you have the powershell scripts in my case its C:\PSScripts.
+#    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass # This bypass Execution policys, this allows you to rrun your own scripts, but only untill you close the terminal again.
+#    & ".\noticePeriod.ps1" # Runs the selected script. & means that it uses the cd folder and adds the file to that path and run that script.
+# 5: By default the response_log will be saved to a .txt file in the following folder: C:\PSScripts if you want to change that. then change this section # Path to the log file in the ps1 files
+#    You can also change the values you send to the API in the .ps1 files if you want to test a specific scenario.
+# 6: HAPPY TESTING! :)
 
-Invoke-WebRequest -Uri "https://localhost:7236/api/dmcalculators/severancepay" `
-                  -Method POST `
-                  -Body $body `
-                  -ContentType "application/json" `
-                  -UseBasicParsing
+# -------------------------------------------------------------------------------------------------- #
+
+# Call for Serverence Pay
+# Path to the log file
+$logFile = "C:\PSScripts\SeverancePay_Log.txt"
+
+# Optional: Uncomment to clear the log on each run
+# Remove-Item $logFile -ErrorAction SilentlyContinue
+
+# Build the request body as a hashtable
+$bodyRaw = @{
+    salaryPerHour     = 210.50
+    workingHours      = 37
+    fritvalgsPercent  = 9.45
+    UnemploymentMonthlyRate  = 21092
+}
+
+# Convert to pretty JSON for logging
+$bodyFormatted = $bodyRaw | ConvertTo-Json -Depth 5 -Compress:$false
+
+# Log the request body
+Add-Content -Path $logFile -Value "=== REQUEST ==="
+Add-Content -Path $logFile -Value $bodyFormatted
+Add-Content -Path $logFile -Value "`n"
+
+# Convert to compact JSON for the actual request
+$bodyToSend = $bodyRaw | ConvertTo-Json -Depth 5
+
+# Send the request
+$response = Invoke-WebRequest -Uri "https://localhost:7236/api/dmcalculators/severancepay" `
+                              -Method POST `
+                              -Body $bodyToSend `
+                              -ContentType "application/json" `
+                              -UseBasicParsing
+
+# Convert and format the response
+$responseFormatted = $response.Content | ConvertFrom-Json | ConvertTo-Json -Depth 10 -Compress:$false
+
+# Log the response content
+Add-Content -Path $logFile -Value "=== RESPONSE ==="
+Add-Content -Path $logFile -Value $responseFormatted
+Add-Content -Path $logFile -Value "`n`n"
+
+# -------------------------------------------------------------------------------------------------- #
 
 # Call for Rest Period
-$body = @{
+# Path to the log file
+$logFile = "C:\PSScripts\RestPeriod_Log.txt"
+
+# Optional: Uncomment the line below to clear the log file each time
+# Remove-Item $logFile -ErrorAction SilentlyContinue
+
+# Build the request body as a raw hashtable
+$bodyRaw = @{
     isEightHoursRules = 0
-    t1 = 1
-    t2 = 1
-    t3 = 1
-    t4 = 1
-    t5 = 1
-    t6 = 1
-    t7 = 0
-    t8 = 0
-    t9 = 0
-    t10 = 0
-    t11 = 0
-    t12 = 0
-    t13 = 0
-    t14 = 0
-    t15 = 0
-    t16 = 0
-    t17 = 1
-    t18 = 1
-    t19 = 1
-    t20 = 1
-    t21 = 1
-    t22 = 1 
-    t23 = 1
-    t24 = 1
-} | ConvertTo-Json
+    t1 = 1; t2 = 1; t3 = 1; t4 = 1; t5 = 1; t6 = 1; t7 = 0; t8 = 0
+    t9 = 0; t10 = 0; t11 = 0; t12 = 0; t13 = 0; t14 = 0; t15 = 0; t16 = 0
+    t17 = 1; t18 = 1; t19 = 1; t20 = 1; t21 = 1; t22 = 1; t23 = 1; t24 = 1
+}
 
-Invoke-WebRequest -Uri "https://localhost:7236/api/dmcalculators/restPeriod" `
-                  -Method POST `
-                  -Body $body `
-                  -ContentType "application/json" `
-                  -UseBasicParsing
+# Convert the hashtable to pretty-formatted JSON for logging
+$bodyFormatted = $bodyRaw | ConvertTo-Json -Depth 5 -Compress:$false
 
+# Log the request body
+Add-Content -Path $logFile -Value "=== REQUEST ==="
+Add-Content -Path $logFile -Value $bodyFormatted
+Add-Content -Path $logFile -Value "`n"
 
+# Convert to compact JSON for sending in the request
+$bodyToSend = $bodyRaw | ConvertTo-Json -Depth 5
 
-$body = @{
+# Send the request
+$response = Invoke-WebRequest -Uri "https://localhost:7236/api/dmcalculators/restPeriod" `
+                              -Method POST `
+                              -Body $bodyToSend `
+                              -ContentType "application/json" `
+                              -UseBasicParsing
+
+# Convert the response to a formatted JSON string
+$responseFormatted = $response.Content | ConvertFrom-Json | ConvertTo-Json -Depth 10 -Compress:$false
+
+# Log the response content
+Add-Content -Path $logFile -Value "=== RESPONSE ==="
+Add-Content -Path $logFile -Value $responseFormatted
+Add-Content -Path $logFile -Value "`n`n"
+
+# -------------------------------------------------------------------------------------------------- #
+
+# Call for NoticePeiod
+# Path to the log file
+$logFile = "C:\PSScripts\NoticePeriod_Log.txt"
+
+# Optional: Uncomment to reset log each time
+# Remove-Item $logFile -ErrorAction SilentlyContinue
+
+# Build the request body as a hashtable
+$bodyRaw = @{
     SelectedCollectiveAgreement = 1
-    TerminatingParty = 0
-    SalariedEmployee = 0
-    ContractStartDate = "2020-01-01"
-    ContractTerminatedDate = "2024-06-01"
-    BirthdayDate = "1990-05-10"
-} | ConvertTo-Json -Depth 3
+    TerminatingParty            = 0
+    SalariedEmployee            = 1
+    ContractStartDate           = "2020-01-01"
+    ContractTerminatedDate      = "2025-06-25"
+    BirthdayDate                = "1988-01-27"
+}
+
+# Convert to pretty JSON for logging
+$bodyFormatted = $bodyRaw | ConvertTo-Json -Depth 5 -Compress:$false
+
+# Log the request body
+Add-Content -Path $logFile -Value "=== REQUEST ==="
+Add-Content -Path $logFile -Value $bodyFormatted
+Add-Content -Path $logFile -Value "`n"
+
+# Convert to compact JSON for the API call
+$bodyToSend = $bodyRaw | ConvertTo-Json -Depth 5
 
 try {
+    # Send the request
     $response = Invoke-WebRequest -Uri "https://localhost:7236/api/dmcalculators/noticePeriod" `
                                   -Method POST `
-                                  -Body $body `
+                                  -Body $bodyToSend `
                                   -ContentType "application/json" `
                                   -UseBasicParsing
 
-    $responseObj = $response.Content | ConvertFrom-Json
-    $responseObj
+    # Convert and format the response
+    $responseFormatted = $response.Content | ConvertFrom-Json | ConvertTo-Json -Depth 10 -Compress:$false
+
+    # Log the response
+    Add-Content -Path $logFile -Value "=== RESPONSE ==="
+    Add-Content -Path $logFile -Value $responseFormatted
+    Add-Content -Path $logFile -Value "`n`n"
+
+    # Also output to console if needed
+    $responseFormatted
 }
 catch {
     Write-Host "`n--- ERROR ON CALL TO API ---`n" -ForegroundColor Red
@@ -79,11 +156,19 @@ catch {
         $stream = $_.Exception.Response.GetResponseStream()
         $reader = New-Object System.IO.StreamReader($stream)
         $errorResponse = $reader.ReadToEnd()
+
+        # Log error response
+        Add-Content -Path $logFile -Value "=== ERROR RESPONSE ==="
+        Add-Content -Path $logFile -Value $errorResponse
+        Add-Content -Path $logFile -Value "`n`n"
+
         Write-Host $errorResponse -ForegroundColor Yellow
     }
     else {
         Write-Host $_.Exception.Message -ForegroundColor Red
     }
 }
+
+# -------------------------------------------------------------------------------------------------- #
 
 

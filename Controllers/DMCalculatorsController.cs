@@ -20,6 +20,7 @@ namespace DanskMetal.Calculators.Api.Controllers
             if (input is null ||
                 input.SalaryPerHour <= 0 ||
                 input.WorkingHours <= 0 ||
+                input.UnemploymentMonthlyRate <= 0 ||
                 input.FritvalgsPercent < 0)
             {
                 return BadRequest("All values has to be above 0 except FritvalgsPercent.");
