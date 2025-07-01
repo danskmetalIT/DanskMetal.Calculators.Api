@@ -2,7 +2,7 @@
 using DanskMetal.Calculators.Api.Models;
 using DanskMetal.Calculators.Api.Services;
 using Microsoft.AspNetCore.Mvc.TagHelpers;
-//using Umbraco.Cms.Web.Common.Controllers; // Enable this line if you are using UmbracoApiController instead of ControllerBase
+// using Umbraco.Cms.Web.Common.Controllers; // Enable this line if you are using UmbracoApiController instead of ControllerBase
 
 namespace DanskMetal.Calculators.Api.Controllers
 {
