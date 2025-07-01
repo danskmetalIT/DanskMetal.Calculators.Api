@@ -2,7 +2,7 @@
 using DanskMetal.Calculators.Api.Models;
 using DanskMetal.Calculators.Api.Services;
 using Microsoft.AspNetCore.Mvc.TagHelpers;
-//using Umbraco.Cms.Web.Common.Controllers; Enable this line if you are using UmbracoApiController instead of ControllerBase
+//using Umbraco.Cms.Web.Common.Controllers; // Enable this line if you are using UmbracoApiController instead of ControllerBase
 
 namespace DanskMetal.Calculators.Api.Controllers
 {
@@ -101,7 +101,7 @@ namespace DanskMetal.Calculators.Api.Controllers
 
             return Ok(result);
         }
-        
+
         [HttpPost("noticePeriod")]
         public ActionResult<NoticePeriodResult> CalculateNoticePeriod(NoticePeriodInput input)
         {
@@ -112,7 +112,7 @@ namespace DanskMetal.Calculators.Api.Controllers
                 input.SalariedEmployee < 0 || input.SalariedEmployee > 2 ||
                 input.ContractStartDate == default ||
                 input.ContractTerminatedDate == default ||
-                input.BirthdayDate == default) 
+                input.BirthdayDate == default)
             {
                 return BadRequest("Input values are not correct. Please send correct values");
             }
@@ -127,11 +127,11 @@ namespace DanskMetal.Calculators.Api.Controllers
                 ExtraDisplayedInfoStr = result.ExtraDisplayedInfoStr
                     .Replace("\r\n", "<br />")
                     .Replace("\n", "<br />")
-                        };
+            };
 
             return Ok(updatedResult);
         }
-        
+
         // Placeholder for the other Services coming from Simon Larsen Dansk Metal
         // [HttpPost("somethingelse")]
         // public ActionResult<...> CalculateSomethingElse(...) { ... }
@@ -165,6 +165,8 @@ namespace DanskMetal.Calculators.Api.Controllers
     //    [HttpPost("restPeriod")]
     //    public ActionResult<RestPeriodResult> CalculateRestPeriod(RestPeriodInput input)
     //    {
+    //        // Checks if inputs types are correct. 
+    //        // If not. Then return BadRequest "All values has to be included and valid"
     //        if (input == null ||
     //            (input.IsEightHourRules != 0 && input.IsEightHourRules != 1) ||
     //            (input.T1 != 0 && input.T1 != 1) ||
@@ -192,15 +194,35 @@ namespace DanskMetal.Calculators.Api.Controllers
     //            (input.T23 != 0 && input.T23 != 1) ||
     //            (input.T24 != 0 && input.T24 != 1))
     //        {
-    //            return BadRequest("All values have to be included and valid");
+    //            return BadRequest("All values has to be included and valid");
     //        }
 
     //        var result = RestPeriodCalculator.Calculate(
     //            input.IsEightHourRules,
-    //            input.T1, input.T2, input.T3, input.T4, input.T5, input.T6,
-    //            input.T7, input.T8, input.T9, input.T10, input.T11, input.T12,
-    //            input.T13, input.T14, input.T15, input.T16, input.T17, input.T18,
-    //            input.T19, input.T20, input.T21, input.T22, input.T23, input.T24
+    //            input.T1,
+    //            input.T2,
+    //            input.T3,
+    //            input.T4,
+    //            input.T5,
+    //            input.T6,
+    //            input.T7,
+    //            input.T8,
+    //            input.T9,
+    //            input.T10,
+    //            input.T11,
+    //            input.T12,
+    //            input.T13,
+    //            input.T14,
+    //            input.T15,
+    //            input.T16,
+    //            input.T17,
+    //            input.T18,
+    //            input.T19,
+    //            input.T20,
+    //            input.T21,
+    //            input.T22,
+    //            input.T23,
+    //            input.T24
     //        );
 
     //        return Ok(result);
@@ -209,6 +231,7 @@ namespace DanskMetal.Calculators.Api.Controllers
     //    [HttpPost("noticePeriod")]
     //    public ActionResult<NoticePeriodResult> CalculateNoticePeriod(NoticePeriodInput input)
     //    {
+    //        // Checks if input values are valid.
     //        if (input is null ||
     //            input.SelectedCollectiveAgreement < 0 || input.SelectedCollectiveAgreement > 9 ||
     //            input.TerminatingParty < 0 || input.TerminatingParty > 1 ||
@@ -221,7 +244,18 @@ namespace DanskMetal.Calculators.Api.Controllers
     //        }
 
     //        var result = NoticePeriodCalculator.Calculate(input);
-    //        return Ok(result);
+
+    //        // Replace C# newlines and likes to html version.
+    //        // To display raw in Umbraco you can use
+    //        // @html.Raw(Model.ExtraDisplayedInfoStr) or what else you have called it.
+    //        var updatedResult = result with
+    //        {
+    //            ExtraDisplayedInfoStr = result.ExtraDisplayedInfoStr
+    //                .Replace("\r\n", "<br />")
+    //                .Replace("\n", "<br />")
+    //        };
+
+    //        return Ok(updatedResult);
     //    }
 
     //    // Placeholder for the other Services coming from Simon Larsen Dansk Metal
